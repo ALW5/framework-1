@@ -1,75 +1,133 @@
-"""
-Сервис управления фотостудией.
-Начальный сценарий (ПР1).
-Реализованы функции: информация о студии, проверка доступности зала,
-расчёт стоимости бронирования, определение статуса клиента.
-"""
-
-from datetime import date
+"""Точка запуска приложения «Сервис управления фотостудией»."""
 
 
-def get_studio_info(studio_name, address, rooms_count):
-    """Возвращает информацию о фотостудии."""
-    return (
-        f"Студия: {studio_name}\n"
-        f"Адрес: {address}\n"
-        f"Количество залов: {rooms_count}"
-    )
+from pathlib import Path
+
+from bookings import (
+    cancel_booking,
+    create_booking,
+    get_booking_status,
+    is_room_available,
+)
+from storage import (
+    load_bookings,
+    load_rooms,
+    save_bookings,
+    save_rooms,
+)
+from studios import (
+    check_room_capacity,
+    filter_rooms_by_capacity,
+    find_room,
+    sort_rooms,
+)
+from utils import input_date, input_int
+
+DATA_DIR = Path("data")
+ROOMS_FILE = DATA_DIR / "studios.json"
+BOOKINGS_FILE = DATA_DIR / "bookings.json"
 
 
-def check_room_availability(is_available):
-    """Проверяет доступность зала на выбранную дату."""
-    if is_available:
-        return "Зал свободен — можно бронировать"
-    return "Зал занят — выберите другое время"
+def show_rooms(rooms: dict[int, dict]) -> None:
+    """Вывести список залов."""
+    if not rooms:
+        print("Залы не найдены.")
+        return
+    print(f"\n{'ID':<4}{'Название':<25}{'Студия':<20}{'Мест':<8}{'Цена/час':<10}")
+    print("-" * 70)
+    for room_id, room in rooms.items():
+        print(
+            f"{room_id:<4}{room['name']:<25}{room['studio']:<20}"
+            f"{room['capacity']:<8}{room['price_per_hour']:<10}"
+        )
 
 
-def calculate_booking_cost(hours, price_per_hour, is_discount):
-    """Рассчитывает стоимость бронирования.
-    
-    is_discount — True, если у клиента скидка 10%.
-    """
-    total = hours * price_per_hour
-    if is_discount:
-        total = total * 0.9
-    return total
+def show_bookings(bookings: list[dict], rooms: dict[int, dict]) -> None:
+    """Вывести список бронирований."""
+    if not bookings:
+        print("Бронирований нет.")
+        return
+    print(f"\n{'ID':<4}{'Зал':<25}{'Дата':<15}")
+    print("-" * 50)
+    for b in bookings:
+        room_name = rooms.get(b["room_id"], {}).get("name", "—")
+        print(f"{b['id']:<4}{room_name:<25}{b['date']:<15}")
 
 
-def get_client_status(client_type):
-    """Определяет статус клиента по типу."""
-    if client_type == "vip":
-        return "VIP-клиент — персональный менеджер"
-    elif client_type == "regular":
-        return "Постоянный клиент — скидка 10%"
-    else:
-        return "Новый клиент — добро пожаловать!"
+def main() -> None:
+    """Точка входа: цикл меню приложения."""
+    DATA_DIR.mkdir(exist_ok=True)
+    rooms = load_rooms(str(ROOMS_FILE))
+    bookings = load_bookings(str(BOOKINGS_FILE))
+
+    while True:
+        print("\n=== Сервис управления фотостудией ===")
+        print("1. Показать залы")
+        print("2. Найти зал по названию")
+        print("3. Проверить вместимость")
+        print("4. Отобрать залы по вместимости")
+        print("5. Сортировать залы по цене")
+        print("6. Проверить доступность на дату")
+        print("7. Забронировать зал")
+        print("8. Отменить бронирование")
+        print("9. Показать бронирования")
+        print("0. Выход")
+
+        choice = input("Выберите действие: ").strip()
+
+        try:
+            if choice == "1":
+                show_rooms(rooms)
+            elif choice == "2":
+                query = input("Подстрока названия: ")
+                ids = find_room(rooms, query)
+                if ids:
+                    print("Найдены залы:", ids)
+                else:
+                    print("Ничего не найдено.")
+            elif choice == "3":
+                room_id = input_int("ID зала: ")
+                min_cap = input_int("Минимальная вместимость: ")
+                print(check_room_capacity(rooms, room_id, min_cap))
+            elif choice == "4":
+                min_cap = input_int("Минимальная вместимость: ")
+                print("Подходящие залы:", filter_rooms_by_capacity(rooms, min_cap))
+            elif choice == "5":
+                for room_id, room in sort_rooms(rooms):
+                    print(f"{room_id}: {room['name']} — {room['price_per_hour']} руб/час")
+            elif choice == "6":
+                room_id = input_int("ID зала: ")
+                bdate = input_date("Дата (ДД.ММ.ГГГГ): ")
+                available = is_room_available(bookings, room_id, bdate)
+                print(get_booking_status(available))
+            elif choice == "7":
+                room_id = input_int("ID зала: ")
+                bdate = input_date("Дата (ДД.ММ.ГГГГ): ")
+                booking = create_booking(bookings, room_id, bdate)
+                if booking:
+                    save_bookings(str(BOOKINGS_FILE), bookings)
+                    print(f"Бронирование создано: id={booking['id']}")
+                else:
+                    print("Зал уже занят на эту дату.")
+            elif choice == "8":
+                booking_id = input_int("ID бронирования: ")
+                if cancel_booking(bookings, booking_id):
+                    save_bookings(str(BOOKINGS_FILE), bookings)
+                    print("Бронирование отменено.")
+                else:
+                    print("Бронирование не найдено.")
+            elif choice == "9":
+                show_bookings(bookings, rooms)
+            elif choice == "0":
+                save_rooms(str(ROOMS_FILE), rooms)
+                save_bookings(str(BOOKINGS_FILE), bookings)
+                print("Данные сохранены. Выход.")
+                break
+            else:
+                print("Неверный пункт меню.")
+        except Exception as e:
+            print(f"Ошибка: {e}")
 
 
-# --- Демонстрация работы сценария ---
-
-studio_name = "LightBox Studio"
-studio_address = "г. Москва, ул. Пушкина, 10"
-rooms_count = 4
-
-room_name = "Зал «Лофт»"
-room_capacity = 10
-booking_date = date(2026, 9, 20)
-is_available = True
-
-client_name = "Иван Петров"
-client_type = "regular"
-hours = 3
-price_per_hour = 2500
-is_discount = True
-
-print(get_studio_info(studio_name, studio_address, rooms_count))
-print("---")
-print(f"Зал: {room_name}")
-print(f"Вместимость: {room_capacity} человек")
-print(f"Дата бронирования: {booking_date}")
-print(check_room_availability(is_available))
-print("---")
-print(f"Клиент: {client_name}")
-print(f"Статус: {get_client_status(client_type)}")
-cost = calculate_booking_cost(hours, price_per_hour, is_discount)
-print(f"Стоимость бронирования: {cost:.2f} руб.")
+if __name__ == "__main__":
+    main()
