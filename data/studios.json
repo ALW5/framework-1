@@ -1,0 +1,20 @@
+{
+  "1": {
+    "name": "Зал «Лофт»",
+    "studio": "LightBox Studio",
+    "capacity": 10,
+    "price_per_hour": 2500
+  },
+  "2": {
+    "name": "Зал «Минимализм»",
+    "studio": "LightBox Studio",
+    "capacity": 6,
+    "price_per_hour": 1800
+  },
+  "3": {
+    "name": "Зал «Белый»",
+    "studio": "White Room",
+    "capacity": 15,
+    "price_per_hour": 3200
+  }
+}
