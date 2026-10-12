@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "name": "Лофт",
+    "studio": "LightBox Studio",
+    "capacity": 10,
+    "price_per_hour": 2500
+  },
+  {
+    "id": 2,
+    "name": "Минимализм",
+    "studio": "LightBox Studio",
+    "capacity": 6,
+    "price_per_hour": 1800
+  }
+]
