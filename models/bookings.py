@@ -100,3 +100,13 @@ def get_booking_status(is_available: bool) -> str:
     if is_available:
         return "Зал доступен для бронирования"
     return "Зал уже занят"
+
+
+def find_booking_by_id(
+    bookings: List[Booking], booking_id: int
+) -> Optional[Booking]:
+    """Найти бронирование по идентификатору."""
+    for booking in bookings:
+        if booking.id == booking_id:
+            return booking
+    return None
