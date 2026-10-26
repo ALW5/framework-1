@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Залы — Фотостудия{% endblock %}
+
+{% block content %}
+<h1>Залы фотостудии</h1>
+<p>Всего залов: {{ rooms|length }}</p>
+
+<div class="row">
+    {% for room in rooms %}
+        {% include "rooms/includes/room_card.html" %}
+    {% empty %}
+        <p>Залы не найдены.</p>
+    {% endfor %}
+</div>
+{% endblock %}

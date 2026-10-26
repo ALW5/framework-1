@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Главная — Фотостудия{% endblock %}
+
+{% block content %}
+<h1 class="display-4">Сервис управления фотостудией</h1>
+<p class="lead">Управление залами фотостудии и бронированиями.</p>
+<p>Основные разделы:</p>
+<a href="{% url 'rooms:list' %}" class="btn btn-primary me-2">Залы</a>
+<a href="{% url 'bookings:list' %}" class="btn btn-secondary">Бронирования</a>
+{% endblock %}

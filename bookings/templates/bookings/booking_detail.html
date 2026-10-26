@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if booking %}Бронирование №{{ booking.id }} — Фотостудия{% else %}Бронь не найдена{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if booking %}
+    <div class="card room-card">
+        <div class="card-body">
+            <h1 class="card-title">Бронирование №{{ booking.id }}</h1>
+            <p class="card-text"><strong>Зал:</strong> {{ booking.room.name }}</p>
+            <p class="card-text"><strong>Дата:</strong> {{ booking.booking_date }}</p>
+            <p class="card-text"><strong>Клиент:</strong> {{ booking.client.name }}</p>
+            <p class="card-text">
+                <strong>Статус:</strong>
+                {% include "bookings/includes/booking_status.html" %}
+            </p>
+        </div>
+    </div>
+{% else %}
+    <h1 class="text-danger">Бронирование не найдено</h1>
+    <p>Бронирование с указанным идентификатором отсутствует.</p>
+{% endif %}
+<a href="{% url 'bookings:list' %}" class="btn btn-outline-secondary mt-3">
+    ← к списку броней
+</a>
+{% endblock %}

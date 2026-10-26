@@ -43,3 +43,17 @@ project/
 ```bash
 python manage.py migrate
 python manage.py runserve
+
+## Django Template Language (ПР6)
+
+Веб-интерфейс переведён с генерации HTML в Python на Django-шаблоны.
+
+- Базовый шаблон: `templates/base.html` (блоки `{% block title %}`, `{% block content %}`)
+- Навигация: `templates/includes/navigation.html`
+- Карточка зала: `rooms/templates/rooms/includes/room_card.html`
+- Статус брони: `bookings/templates/bookings/includes/booking_status.html`
+- Именованные URL: `{% url 'rooms:detail' room.id %}`
+- Фильтры: `{{ rooms|length }}`, `{{ room.name|default:"Без названия" }}`
+- Статика: `homepage/static/homepage/css/style.css`, `js/main.js`, `img/logo.png`
+
+Функция `page()` из ПР5 полностью удалена — HTML теперь в шаблонах.
