@@ -1,26 +1,44 @@
 """View-функции приложения rooms."""
 
+import sqlite3
 from django.shortcuts import render
 
-from models.rooms import find_room_by_id
-from storage import load_rooms
+DB_PATH = "data/roomly.sqlite"
 
 
 def rooms(request):
-    """Список залов."""
-    rooms_list = load_rooms("data/rooms.json")
-    context = {"rooms": rooms_list}
-    return render(request, "rooms/room_list.html", context)
+    """Список залов из SQLite."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    rooms_list = conn.execute("""
+        SELECT id, name, studio, capacity, price_per_hour 
+        FROM rooms 
+        ORDER BY name;
+    """).fetchall()
+    conn.close()
+    
+    return render(request, "rooms/room_list.html", {"rooms": rooms_list})
 
 
-def room_detail(request, room_id: int):
-    """Карточка зала."""
-    rooms_list = load_rooms("data/rooms.json")
-    room = find_room_by_id(rooms_list, room_id)
-    context = {"room": room}
-    return render(
-        request,
-        "rooms/room_detail.html",
-        context,
-        status=404 if room is None else 200,
-    )
+def available_rooms(request):
+    """Поиск свободных залов на дату."""
+    booking_date = request.GET.get("date")
+    rooms = []
+    
+    if booking_date:
+        conn = sqlite3.connect(DB_PATH)
+        conn.row_factory = sqlite3.Row
+        rooms = conn.execute("""
+            SELECT id, name, capacity 
+            FROM rooms 
+            WHERE id NOT IN (
+                SELECT room_id FROM bookings 
+                WHERE booking_date = ? AND is_cancelled = 0
+            ) ORDER BY name;
+        """, [booking_date]).fetchall()
+        conn.close()
+        
+    return render(request, "rooms/available.html", {
+        "rooms": rooms,
+        "booking_date": booking_date
+    })
